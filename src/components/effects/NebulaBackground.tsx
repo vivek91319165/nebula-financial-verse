@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
 
@@ -39,7 +38,7 @@ const NebulaBackground = ({ intensity = 1.0 }: NebulaBackgroundProps) => {
 
     // Create stars
     const starsGeometry = new THREE.BufferGeometry();
-    const starsCount = 10000;
+    const starsCount = 15000; // Increased from 10000
     const starsPositions = new Float32Array(starsCount * 3);
     const starsSizes = new Float32Array(starsCount);
     const starsColors = new Float32Array(starsCount * 3);
@@ -50,6 +49,8 @@ const NebulaBackground = ({ intensity = 1.0 }: NebulaBackgroundProps) => {
       new THREE.Color("#F97316"), // Orange
       new THREE.Color("#9b87f5"), // Purple
       new THREE.Color("#ffffff"), // White
+      new THREE.Color("#ff69b4"), // Pink
+      new THREE.Color("#4b0082"), // Indigo
     ];
 
     for (let i = 0; i < starsCount; i++) {
@@ -91,12 +92,13 @@ const NebulaBackground = ({ intensity = 1.0 }: NebulaBackgroundProps) => {
       color: 0x5517af,
       transparent: true,
       blending: THREE.AdditiveBlending,
-      opacity: 0.4,
+      opacity: 0.6, // Increased from 0.4
     });
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       const nebula = new THREE.Sprite(nebulaMaterial);
-      nebula.scale.set(40, 40, 1);
+      const scale = 30 + Math.random() * 20; // Varied sizes
+      nebula.scale.set(scale, scale, 1);
       nebula.position.set(
         (Math.random() - 0.5) * 100,
         (Math.random() - 0.5) * 100,
