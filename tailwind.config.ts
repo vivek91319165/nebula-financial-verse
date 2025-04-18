@@ -61,6 +61,36 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Nebula Budget color scheme
+				nebula: {
+					// Frontend components (blue)
+					blue: {
+						DEFAULT: '#1EAEDB', 
+						light: '#33C3F0',
+						dark: '#0EA5E9'
+					},
+					// Backend processes (green)
+					green: {
+						DEFAULT: '#F2FCE2'
+					},
+					// AI modules (orange)
+					orange: {
+						DEFAULT: '#F97316',
+						light: '#FEC6A1'
+					},
+					// Blockchain interactions (purple)
+					purple: {
+						DEFAULT: '#9b87f5',
+						light: '#D6BCFA',
+						dark: '#6E59A5'
+					},
+					// Dark space background
+					space: {
+						dark: '#050816', 
+						DEFAULT: '#0F172A',
+						light: '#1E293B'
+					}
 				}
 			},
 			borderRadius: {
