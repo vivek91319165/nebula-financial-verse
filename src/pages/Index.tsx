@@ -48,13 +48,21 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
+          className="space-x-4"
         >
           <Button 
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/auth?mode=login')}
+            className="bg-nebula-blue hover:bg-nebula-blue-light text-lg px-8 py-6"
+            size="lg"
+          >
+            Login
+          </Button>
+          <Button 
+            onClick={() => navigate('/auth?mode=signup')}
             className="bg-nebula-purple hover:bg-nebula-purple-light text-lg px-8 py-6"
             size="lg"
           >
-            Get Started
+            Sign Up
           </Button>
         </motion.div>
       </motion.div>

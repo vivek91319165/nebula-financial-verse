@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,12 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocation } from 'react-router-dom';
 
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const location = useLocation();
+  const defaultTab = new URLSearchParams(location.search).get('mode') || 'login';
 
   const handleAuth = async (action: 'login' | 'signup') => {
     try {
@@ -40,7 +42,7 @@ const Auth = () => {
       <Card className="w-full max-w-md p-6 bg-nebula-space-light border-nebula-purple/20">
         <h1 className="text-2xl font-bold text-center mb-6 text-white">Welcome to Nebula Budget</h1>
         
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
