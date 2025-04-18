@@ -1,4 +1,3 @@
-
 import { DollarSign, ArrowDownRight, ArrowUpRight, Wallet, Brain, Boxes } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import StatCard from "@/components/dashboard/StatCard";
@@ -29,25 +28,7 @@ const Dashboard = () => {
       </div>
       
       <h3 className="text-nebula-blue font-semibold mt-6 mb-3">Recent Transactions</h3>
-      <div className="space-y-2">
-        {[
-          { name: "Grocery Shopping", amount: "-$125.40", date: "Today" },
-          { name: "Electricity Bill", amount: "-$84.30", date: "Yesterday" },
-          { name: "Paycheck", amount: "+$2,400.00", date: "April 15" },
-          { name: "Coffee Shop", amount: "-$12.50", date: "April 14" },
-          { name: "Gas Station", amount: "-$45.20", date: "April 12" }
-        ].map((tx, i) => (
-          <div key={i} className="flex justify-between items-center p-3 bg-nebula-blue/5 rounded-lg border border-nebula-blue/10">
-            <div>
-              <p className="font-medium text-sm">{tx.name}</p>
-              <p className="text-xs text-gray-400">{tx.date}</p>
-            </div>
-            <div className={`font-medium ${tx.amount.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
-              {tx.amount}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ExpensesList />
     </div>
   );
   

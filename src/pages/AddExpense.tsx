@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Camera, Wallet, Upload, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,13 +7,59 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/providers/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/layout/MainLayout";
+import { toast } from "sonner";
 
 const AddExpense = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("fiat");
   const [isScanning, setIsScanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [amount, setAmount] = useState("");
+  const [merchant, setMerchant] = useState("");
+  const [category, setCategory] = useState<string>("");
+  const [description, setDescription] = useState("");
+  const [currency, setCurrency] = useState("USD");
+
+  const handleSubmitExpense = async () => {
+    if (!user) {
+      toast.error("Please login to add expenses");
+      return;
+    }
+
+    if (!amount || !category) {
+      toast.error("Please fill in amount and category");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('expenses').insert({
+        amount: parseFloat(amount),
+        merchant,
+        category,
+        description,
+        currency,
+        transaction_type: activeTab,
+        user_id: user.id
+      });
+
+      if (error) throw error;
+
+      toast.success("Expense added successfully");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleScanReceipt = () => {
     setIsScanning(true);
@@ -105,17 +150,32 @@ const AddExpense = () => {
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="merchant" className="text-gray-300">Merchant/Payee</Label>
-                      <Input id="merchant" placeholder="Enter merchant name" className="bg-nebula-space border-nebula-blue/20" />
+                      <Input 
+                        id="merchant" 
+                        placeholder="Enter merchant name" 
+                        className="bg-nebula-space border-nebula-blue/20"
+                        value={merchant}
+                        onChange={(e) => setMerchant(e.target.value)}
+                      />
                     </div>
                     
                     <div>
                       <Label htmlFor="amount" className="text-gray-300">Amount</Label>
-                      <Input id="amount" placeholder="0.00" type="number" step="0.01" className="bg-nebula-space border-nebula-blue/20" />
+                      <Input 
+                        id="amount" 
+                        placeholder="0.00" 
+                        type="number" 
+                        step="0.01" 
+                        className="bg-nebula-space border-nebula-blue/20"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        required
+                      />
                     </div>
                     
                     <div>
                       <Label htmlFor="category" className="text-gray-300">Category</Label>
-                      <Select>
+                      <Select value={category} onValueChange={setCategory}>
                         <SelectTrigger className="bg-nebula-space border-nebula-blue/20">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -125,24 +185,32 @@ const AddExpense = () => {
                           <SelectItem value="entertainment">Entertainment</SelectItem>
                           <SelectItem value="utilities">Utilities</SelectItem>
                           <SelectItem value="housing">Housing</SelectItem>
+                          <SelectItem value="shopping">Shopping</SelectItem>
+                          <SelectItem value="health">Health</SelectItem>
+                          <SelectItem value="education">Education</SelectItem>
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div>
-                      <Label htmlFor="date" className="text-gray-300">Date</Label>
-                      <Input id="date" type="date" className="bg-nebula-space border-nebula-blue/20" />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="notes" className="text-gray-300">Notes</Label>
-                      <Input id="notes" placeholder="Add notes (optional)" className="bg-nebula-space border-nebula-blue/20" />
+                      <Label htmlFor="description" className="text-gray-300">Description</Label>
+                      <Input 
+                        id="description" 
+                        placeholder="Add description (optional)" 
+                        className="bg-nebula-space border-nebula-blue/20"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                      />
                     </div>
                   </div>
                   
-                  <Button className="w-full bg-nebula-blue hover:bg-nebula-blue-light mt-4">
-                    Save Expense
+                  <Button 
+                    className="w-full bg-nebula-blue hover:bg-nebula-blue-light mt-4"
+                    onClick={handleSubmitExpense}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Save Expense"}
                   </Button>
                 </div>
               </Card>
