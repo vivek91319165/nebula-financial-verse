@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { 
   Home, 
@@ -10,8 +9,27 @@ import {
   LogOut 
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from '@/providers/AuthProvider';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Navbar = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success('Logged out successfully');
+      navigate('/auth');
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  if (!user) return null;
+
   return (
     <nav className="fixed top-0 left-0 h-screen w-16 flex flex-col items-center py-8 bg-nebula-space border-r border-nebula-purple/20">
       <div className="flex flex-col items-center space-y-10">
@@ -53,7 +71,12 @@ const Navbar = () => {
       </div>
 
       <div className="mt-auto">
-        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-200 transition-colors duration-200">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-gray-400 hover:text-gray-200 transition-colors duration-200"
+          onClick={handleLogout}
+        >
           <LogOut size={20} />
         </Button>
       </div>
