@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/providers/AuthProvider';
@@ -13,50 +12,40 @@ export type CryptoAsset = {
   change: number;
 };
 
-// Simulate crypto data fetching
-const fetchCryptoAssets = async (address: string): Promise<CryptoAsset[]> => {
-  // This is a mock implementation
-  // In a real app, you would use APIs like Moralis, Alchemy, or Chainlink to fetch real data
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-  
-  // Mock data based on address
-  // In a real implementation, this would come from blockchain data
-  const mockAssets: CryptoAsset[] = [
-    {
-      name: "Bitcoin",
-      symbol: "BTC",
-      balance: "0.075",
-      value: 1950,
-      change: 5.2
-    },
-    {
+// Function to fetch token balances from Web3
+const fetchTokenBalances = async (address: string): Promise<CryptoAsset[]> => {
+  try {
+    // Using Ethereum's Web3 provider
+    if (!window.ethereum) {
+      throw new Error('Web3 provider not found');
+    }
+
+    // Get ETH balance
+    const ethBalance = await window.ethereum.request({
+      method: 'eth_getBalance',
+      params: [address, 'latest']
+    });
+    
+    // Convert wei to ETH
+    const ethInWei = parseInt(ethBalance, 16);
+    const ethAmount = ethInWei / 1e18;
+    
+    // Fetch current ETH price (in a real app, you'd use a price feed API)
+    const ethPrice = 3500; // Example fixed price, in production use price feed
+    const ethValue = ethAmount * ethPrice;
+
+    // For now, we'll just return ETH. In a real app, you'd fetch other tokens too
+    return [{
       name: "Ethereum",
       symbol: "ETH",
-      balance: "2.5",
-      value: 320.75,
-      change: 10.4
-    },
-    {
-      name: "Stellar",
-      symbol: "XLM",
-      balance: "155",
-      value: 70,
-      change: -2.1
-    }
-  ];
-  
-  // Use the last character of the address to randomize the data a bit
-  const lastChar = address.slice(-1);
-  const multiplier = (parseInt(lastChar, 16) % 5) + 0.8; // Between 0.8 and 4.8
-  
-  return mockAssets.map(asset => ({
-    ...asset,
-    balance: (parseFloat(asset.balance) * multiplier).toFixed(
-      asset.symbol === "BTC" ? 3 : (asset.symbol === "ETH" ? 1 : 0)
-    ),
-    value: Math.round(asset.value * multiplier * 100) / 100,
-    change: Math.round(asset.change * (multiplier * 0.8) * 10) / 10
-  }));
+      balance: ethAmount.toFixed(4),
+      value: ethValue,
+      change: 0, // In production, fetch from price API
+    }];
+  } catch (error) {
+    console.error('Error fetching token balances:', error);
+    return [];
+  }
 };
 
 export const useWallet = () => {
@@ -91,20 +80,23 @@ export const useWallet = () => {
     checkExistingWallet();
   }, [user]);
 
-  // Fetch assets when wallet address changes
+  // Fetch real assets when wallet address changes
   useEffect(() => {
-    if (walletAddress) {
-      fetchCryptoAssets(walletAddress)
-        .then(fetchedAssets => {
-          setAssets(fetchedAssets);
-        })
-        .catch(err => {
-          console.error('Error fetching crypto assets:', err);
-          setError('Failed to fetch crypto assets. Please try again later.');
-        });
-    } else {
-      setAssets([]);
-    }
+    const updateWalletData = async () => {
+      if (walletAddress) {
+        try {
+          const assets = await fetchTokenBalances(walletAddress);
+          setAssets(assets);
+        } catch (err) {
+          console.error('Error fetching wallet data:', err);
+          toast.error('Failed to fetch wallet data');
+        }
+      } else {
+        setAssets([]);
+      }
+    };
+
+    updateWalletData();
   }, [walletAddress]);
 
   const connect = async () => {
@@ -183,7 +175,6 @@ export const useWallet = () => {
   };
 };
 
-// Add TypeScript interface for window.ethereum
 declare global {
   interface Window {
     ethereum?: {
