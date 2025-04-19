@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/providers/AuthProvider';
 import { toast } from 'sonner';
+import { Database } from '@/integrations/supabase/types';
 
 export type CryptoAsset = {
   name: string;
@@ -76,7 +77,7 @@ export const useWallet = () => {
           .select('wallet_address')
           .eq('user_id', user.id)
           .eq('is_active', true)
-          .eq('wallet_type', 'metamask') // Changed from 'ethereum' to 'metamask'
+          .eq('wallet_type', 'metamask')
           .single();
         
         if (data && !error) {
@@ -130,9 +131,9 @@ export const useWallet = () => {
         .upsert({
           user_id: user.id,
           wallet_address: address,
-          wallet_type: 'metamask', // Changed from 'ethereum' to 'metamask'
+          wallet_type: 'metamask',
           is_active: true
-        }, { 
+        } as Database['public']['Tables']['wallets']['Insert'], { 
           onConflict: 'user_id,wallet_type',
           ignoreDuplicates: false
         });
@@ -159,7 +160,7 @@ export const useWallet = () => {
         .from('wallets')
         .update({ is_active: false })
         .eq('user_id', user.id)
-        .eq('wallet_type', 'metamask'); // Changed from 'ethereum' to 'metamask'
+        .eq('wallet_type', 'metamask');
       
       if (error) throw error;
       

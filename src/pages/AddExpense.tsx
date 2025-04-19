@@ -13,6 +13,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
 
 const AddExpense = () => {
   const navigate = useNavigate();
@@ -41,16 +42,18 @@ const AddExpense = () => {
 
     setIsSubmitting(true);
     try {
-      // Fix the Supabase insert by using an object instead of an array
-      const { error } = await supabase.from('expenses').insert({
+      // Use explicit typing for the insert operation
+      const expenseData: Database['public']['Tables']['expenses']['Insert'] = {
         amount: parseFloat(amount),
-        merchant,
+        merchant: merchant || null,
         category, 
-        description,
+        description: description || null,
         currency,
-        transaction_type: activeTab,
+        transaction_type: activeTab as Database['public']['Enums']['transaction_type'],
         user_id: user.id
-      });
+      };
+
+      const { error } = await supabase.from('expenses').insert(expenseData);
 
       if (error) throw error;
 
