@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { 
   Home, 
@@ -33,7 +34,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 h-screen w-16 flex flex-col items-center py-8 bg-nebula-space border-r border-nebula-purple/20">
       <div className="flex flex-col items-center space-y-10">
-        <Link to="/" className="text-nebula-purple hover:text-nebula-purple-light transition-colors duration-200">
+        <Link to="/dashboard" className="text-nebula-purple hover:text-nebula-purple-light transition-colors duration-200">
           <div className="w-8 h-8 flex items-center justify-center bg-nebula-purple/10 rounded-lg nebula-glow">
             <Home size={20} />
           </div>

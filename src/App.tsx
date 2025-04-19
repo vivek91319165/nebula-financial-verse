@@ -11,6 +11,7 @@ import AddExpense from "./pages/AddExpense";
 import Analytics from "./pages/Analytics";
 import AiInsights from "./pages/AiInsights";
 import Settings from "./pages/Settings";
+import Wallet from "./pages/Wallet";
 import NotFound from "./pages/NotFound";
 import AuthProvider from "./providers/AuthProvider";
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/ai-insights" element={<AiInsights />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/wallet" element={<Wallet />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

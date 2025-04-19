@@ -1,3 +1,4 @@
+
 import { DollarSign, ArrowDownRight, ArrowUpRight, Wallet, Brain, Boxes } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import StatCard from "@/components/dashboard/StatCard";
@@ -9,10 +10,17 @@ import ExpensesList from "@/components/dashboard/ExpensesList";
 import UpdateBalanceDialog from "@/components/dashboard/UpdateBalanceDialog";
 import { useBalance } from "@/hooks/useBalance";
 import { useMonthlyExpenses } from "@/hooks/useMonthlyExpenses";
+import { useWallet } from "@/hooks/useWallet";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { balance, isLoading: balanceLoading } = useBalance();
   const { data: monthlySpending, isLoading: expensesLoading } = useMonthlyExpenses();
+  const { walletAddress, assets, connect, isConnecting } = useWallet();
+
+  // Compute total crypto value
+  const totalCryptoValue = assets.reduce((sum, asset) => sum + asset.value, 0);
 
   // Sample fiat content
   const FiatContent = () => (
@@ -44,47 +52,98 @@ const Dashboard = () => {
     </div>
   );
 
-  // Sample crypto content
+  // Real crypto content
   const CryptoContent = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard
           title="Crypto Balance"
-          value="$2,340.75"
-          description="0.075 BTC | 2.5 ETH"
+          value={walletAddress ? `$${totalCryptoValue.toFixed(2)}` : "Not Connected"}
+          description={walletAddress 
+            ? `${assets.length} ${assets.length === 1 ? 'asset' : 'assets'} in your wallet`
+            : "Connect your wallet to view balance"
+          }
           icon={Wallet}
           variant="purple"
         />
-        <StatCard
-          title="Monthly Gain"
-          value="+$320.25"
-          description="13.7% increase"
-          icon={ArrowUpRight}
-          variant="purple"
-        />
+        <div className="relative">
+          <StatCard
+            title="Monthly Gain"
+            value={walletAddress 
+              ? `${assets.some(a => a.change > 0) ? '+' : ''}$${assets.reduce((sum, a) => sum + (a.value * a.change / 100), 0).toFixed(2)}`
+              : "Not Connected"
+            }
+            description={walletAddress 
+              ? `${(assets.reduce((sum, a) => sum + a.change, 0) / assets.length).toFixed(1)}% average change`
+              : "Connect your wallet to view gains"
+            }
+            icon={ArrowUpRight}
+            variant="purple"
+          />
+          {!walletAddress && (
+            <div className="absolute bottom-4 right-4">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-nebula-purple text-nebula-purple"
+                onClick={connect}
+                disabled={isConnecting}
+              >
+                {isConnecting ? "Connecting..." : "Connect"}
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
       
       <h3 className="text-nebula-purple font-semibold mt-6 mb-3">Your Assets</h3>
-      <div className="space-y-2">
-        {[
-          { name: "Bitcoin (BTC)", amount: "0.075 BTC", value: "$1,950.00", change: "+5.2%" },
-          { name: "Ethereum (ETH)", amount: "2.5 ETH", value: "$320.75", change: "+10.4%" },
-          { name: "Stellar (XLM)", amount: "155 XLM", value: "$70.00", change: "-2.1%" }
-        ].map((asset, i) => (
-          <div key={i} className="flex justify-between items-center p-3 bg-nebula-purple/5 rounded-lg border border-nebula-purple/10">
-            <div>
-              <p className="font-medium text-sm">{asset.name}</p>
-              <p className="text-xs text-gray-400">{asset.amount}</p>
-            </div>
-            <div>
-              <p className="font-medium text-right">{asset.value}</p>
-              <p className={`text-xs text-right ${asset.change.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
-                {asset.change}
-              </p>
-            </div>
+      {!walletAddress ? (
+        <div className="flex flex-col items-center justify-center p-8 bg-nebula-space-light rounded-lg border border-nebula-purple/10">
+          <Wallet className="h-12 w-12 text-nebula-purple/30 mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">No Wallet Connected</h3>
+          <p className="text-sm text-gray-400 text-center mb-6 max-w-md">
+            Connect your Web3 wallet to view your cryptocurrency assets and manage your portfolio
+          </p>
+          <div className="flex gap-4">
+            <Button
+              onClick={connect}
+              className="bg-nebula-purple hover:bg-nebula-purple-light"
+              disabled={isConnecting}
+            >
+              {isConnecting ? "Connecting..." : "Connect Wallet"}
+            </Button>
+            <Link to="/wallet">
+              <Button variant="outline" className="border-nebula-purple/20 text-nebula-purple">
+                Manage Wallets
+              </Button>
+            </Link>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {assets.map((asset, i) => (
+            <div key={i} className="flex justify-between items-center p-3 bg-nebula-purple/5 rounded-lg border border-nebula-purple/10">
+              <div>
+                <p className="font-medium text-sm">{asset.name} ({asset.symbol})</p>
+                <p className="text-xs text-gray-400">{asset.balance} {asset.symbol}</p>
+              </div>
+              <div>
+                <p className="font-medium text-right">${asset.value.toFixed(2)}</p>
+                <p className={`text-xs text-right ${asset.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {asset.change >= 0 ? '+' : ''}{asset.change}%
+                </p>
+              </div>
+            </div>
+          ))}
+          <div className="text-right mt-2">
+            <Link to="/wallet">
+              <Button size="sm" variant="ghost" className="text-nebula-purple hover:text-nebula-purple-light">
+                Manage Wallets →
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 
