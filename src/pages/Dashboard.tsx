@@ -1,4 +1,3 @@
-
 import { DollarSign, ArrowDownRight, ArrowUpRight, Wallet, Brain, Boxes } from "lucide-react";
 import MainLayout from "@/components/layout/MainLayout";
 import StatCard from "@/components/dashboard/StatCard";
@@ -19,8 +18,14 @@ const Dashboard = () => {
   const { data: monthlySpending, isLoading: expensesLoading } = useMonthlyExpenses();
   const { walletAddress, assets, connect, isConnecting } = useWallet();
 
-  // Compute total crypto value
+  // Compute total crypto value and monthly change
   const totalCryptoValue = assets.reduce((sum, asset) => sum + asset.value, 0);
+  const monthlyChange = assets.length > 0 
+    ? assets.reduce((sum, asset) => sum + (asset.value * asset.change / 100), 0)
+    : 0;
+  const averageChange = assets.length > 0 
+    ? (assets.reduce((sum, asset) => sum + asset.change, 0) / assets.length)
+    : 0;
 
   // Sample fiat content
   const FiatContent = () => (
@@ -57,25 +62,25 @@ const Dashboard = () => {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard
-          title="Crypto Balance"
-          value={walletAddress ? `$${totalCryptoValue.toFixed(2)}` : "Not Connected"}
+          title="Total Investment"
+          value={walletAddress ? `$${totalCryptoValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Not Connected"}
           description={walletAddress 
-            ? `${assets.length} ${assets.length === 1 ? 'asset' : 'assets'} in your wallet`
-            : "Connect your wallet to view balance"
+            ? `${assets.length} ${assets.length === 1 ? 'asset' : 'assets'} in your portfolio`
+            : "Connect your wallet to view investments"
           }
           icon={Wallet}
           variant="purple"
         />
         <div className="relative">
           <StatCard
-            title="Monthly Gain"
+            title="Monthly Return"
             value={walletAddress 
-              ? `${assets.some(a => a.change > 0) ? '+' : ''}$${assets.reduce((sum, a) => sum + (a.value * a.change / 100), 0).toFixed(2)}`
+              ? `${monthlyChange >= 0 ? '+' : ''}$${monthlyChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
               : "Not Connected"
             }
             description={walletAddress 
-              ? `${(assets.reduce((sum, a) => sum + a.change, 0) / assets.length).toFixed(1)}% average change`
-              : "Connect your wallet to view gains"
+              ? `${averageChange >= 0 ? '+' : ''}${averageChange.toFixed(1)}% average change`
+              : "Connect your wallet to view returns"
             }
             icon={ArrowUpRight}
             variant="purple"
@@ -128,7 +133,7 @@ const Dashboard = () => {
                 <p className="text-xs text-gray-400">{asset.balance} {asset.symbol}</p>
               </div>
               <div>
-                <p className="font-medium text-right">${asset.value.toFixed(2)}</p>
+                <p className="font-medium text-right">${asset.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 <p className={`text-xs text-right ${asset.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {asset.change >= 0 ? '+' : ''}{asset.change}%
                 </p>
