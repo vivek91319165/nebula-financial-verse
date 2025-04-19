@@ -6,23 +6,34 @@ import FloatingActionButton from "@/components/dashboard/FloatingActionButton";
 import MiniCard from "@/components/dashboard/MiniCard";
 import BudgetGalaxy from "@/components/visualization/BudgetGalaxy";
 import ExpensesList from "@/components/dashboard/ExpensesList";
+import UpdateBalanceDialog from "@/components/dashboard/UpdateBalanceDialog";
+import { useBalance } from "@/hooks/useBalance";
+import { useMonthlyExpenses } from "@/hooks/useMonthlyExpenses";
 
 const Dashboard = () => {
+  const { balance, isLoading: balanceLoading } = useBalance();
+  const { data: monthlySpending, isLoading: expensesLoading } = useMonthlyExpenses();
+
   // Sample fiat content
   const FiatContent = () => (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard
-          title="Total Balance"
-          value="$4,750.00"
-          description="+$250 this month"
-          icon={DollarSign}
-          variant="blue"
-        />
+        <div className="relative">
+          <StatCard
+            title="Total Balance"
+            value={balanceLoading ? "Loading..." : `$${balance?.toFixed(2) || '0.00'}`}
+            description="Update your balance"
+            icon={DollarSign}
+            variant="blue"
+          />
+          <div className="absolute top-4 right-4">
+            <UpdateBalanceDialog />
+          </div>
+        </div>
         <StatCard
           title="Monthly Spending"
-          value="$2,120.50"
-          description="65% of budget"
+          value={expensesLoading ? "Loading..." : `$${monthlySpending?.toFixed(2) || '0.00'}`}
+          description={`${monthlySpending && balance ? ((monthlySpending / balance) * 100).toFixed(0) : 0}% of balance`}
           icon={ArrowDownRight}
           variant="blue"
         />
@@ -32,7 +43,7 @@ const Dashboard = () => {
       <ExpensesList />
     </div>
   );
-  
+
   // Sample crypto content
   const CryptoContent = () => (
     <div className="space-y-4">
