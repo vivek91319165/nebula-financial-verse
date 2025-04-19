@@ -76,7 +76,7 @@ export const useWallet = () => {
           .select('wallet_address')
           .eq('user_id', user.id)
           .eq('is_active', true)
-          .eq('wallet_type', 'ethereum')
+          .eq('wallet_type', 'metamask') // Changed from 'ethereum' to 'metamask'
           .single();
         
         if (data && !error) {
@@ -130,7 +130,7 @@ export const useWallet = () => {
         .upsert({
           user_id: user.id,
           wallet_address: address,
-          wallet_type: 'ethereum',
+          wallet_type: 'metamask', // Changed from 'ethereum' to 'metamask'
           is_active: true
         }, { 
           onConflict: 'user_id,wallet_type',
@@ -159,7 +159,7 @@ export const useWallet = () => {
         .from('wallets')
         .update({ is_active: false })
         .eq('user_id', user.id)
-        .eq('wallet_type', 'ethereum');
+        .eq('wallet_type', 'metamask'); // Changed from 'ethereum' to 'metamask'
       
       if (error) throw error;
       

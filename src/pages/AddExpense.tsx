@@ -41,11 +41,11 @@ const AddExpense = () => {
 
     setIsSubmitting(true);
     try {
-      // Fix the Supabase insert by passing a single object instead of an array
+      // Fix the Supabase insert by using an object instead of an array
       const { error } = await supabase.from('expenses').insert({
         amount: parseFloat(amount),
         merchant,
-        category,
+        category, 
         description,
         currency,
         transaction_type: activeTab,
