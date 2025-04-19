@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Camera, Wallet, Upload, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -40,6 +41,7 @@ const AddExpense = () => {
 
     setIsSubmitting(true);
     try {
+      // Fix the Supabase insert by passing a single object instead of an array
       const { error } = await supabase.from('expenses').insert({
         amount: parseFloat(amount),
         merchant,

@@ -5,6 +5,7 @@ import DashboardSplitView from "@/components/dashboard/DashboardSplitView";
 import FloatingActionButton from "@/components/dashboard/FloatingActionButton";
 import MiniCard from "@/components/dashboard/MiniCard";
 import BudgetGalaxy from "@/components/visualization/BudgetGalaxy";
+import ExpensesList from "@/components/dashboard/ExpensesList";
 
 const Dashboard = () => {
   // Sample fiat content
