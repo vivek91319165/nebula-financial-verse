@@ -1,4 +1,3 @@
-
 import { BarChart3, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +10,8 @@ import { useBalance } from "@/hooks/useBalance";
 import { useState, useEffect } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/providers/AuthProvider';
+import { categoryColors } from '@/utils/categoryColors';
+import { useExpensesByCategory } from "@/hooks/useExpensesByCategory";
 
 const Analytics = () => {
   const { balance } = useBalance();
@@ -18,14 +19,13 @@ const Analytics = () => {
   const { assets } = useWallet();
   const { user } = useAuth();
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
-  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const { data: categoryData = [] } = useExpensesByCategory();
 
   // Fetch monthly income/expense data
   useEffect(() => {
     const fetchMonthlyData = async () => {
       if (!user) return;
 
-      // Get the last 6 months
       const months = Array.from({length: 6}, (_, i) => {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
@@ -43,13 +43,12 @@ const Analytics = () => {
           .lte('created_at', endOfMonth.toISOString())
           .eq('user_id', user.id);
 
-        // Sum up expenses for the month
         const expense = expenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
 
         return {
           name: date.toLocaleString('default', { month: 'short' }),
           expense: expense,
-          income: balance ? balance / 6 : 0, // Simulated monthly income based on total balance
+          income: balance ? balance / 6 : 0,
         };
       }));
 
@@ -174,7 +173,11 @@ const Analytics = () => {
                     color: "#F9FAFB" 
                   }} 
                 />
-                <Bar dataKey="value" name="Amount ($)" fill="#F97316" />
+                <Bar 
+                  dataKey="value" 
+                  name="Amount ($)"
+                  fill={(entry) => categoryColors[entry.name] || '#F97316'}
+                />
               </BarChart>
             </ResponsiveContainer>
           </Card>
