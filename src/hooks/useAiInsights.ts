@@ -31,7 +31,10 @@ export const useAiInsights = () => {
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase.functions.invoke('financial-insights', {
-        body: { user_id: user.id },
+        body: { 
+          user_id: user.id,
+          type: 'insights'
+        },
       });
 
       if (error) throw error;
@@ -44,6 +47,23 @@ export const useAiInsights = () => {
     onError: (error) => {
       console.error('Error generating insights:', error);
       toast.error('Failed to generate insights');
+    },
+  });
+
+  const getChatResponse = useMutation({
+    mutationFn: async (message: string) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('financial-insights', {
+        body: { 
+          user_id: user.id,
+          message,
+          type: 'chat'
+        },
+      });
+
+      if (error) throw error;
+      return data;
     },
   });
 
@@ -68,6 +88,7 @@ export const useAiInsights = () => {
     insights,
     isLoading,
     generateInsights,
+    getChatResponse,
     markAsRead,
   };
 };

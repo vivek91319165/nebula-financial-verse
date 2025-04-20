@@ -25,8 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    // Get the user's financial data from the request
-    const { user_id } = await req.json();
+    const { user_id, message, type } = await req.json();
 
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
@@ -56,7 +55,14 @@ serve(async (req) => {
       wallets: wallets || [],
     };
 
-    // Call Groq API for insights
+    let systemPrompt = '';
+    if (type === 'chat') {
+      systemPrompt = `You are a helpful financial assistant. Use this financial data to provide specific, personalized advice: ${JSON.stringify(financialData)}. Be concise and practical in your responses.`;
+    } else {
+      systemPrompt = `You are a financial advisor analyzing user data. Provide 3 specific, actionable insights based on their financial data. Focus on spending patterns, savings opportunities, and investment suggestions. Be concise and specific.`;
+    }
+
+    // Call Groq API
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -68,11 +74,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a financial advisor analyzing user data. Provide 3 specific, actionable insights based on their financial data. Focus on spending patterns, savings opportunities, and investment suggestions. Be concise and specific.`
+            content: systemPrompt
           },
           {
             role: 'user',
-            content: `Analyze this financial data and provide 3 key insights: ${JSON.stringify(financialData)}`
+            content: message || 'Analyze this financial data and provide 3 key insights'
           }
         ],
         temperature: 0.7,
@@ -81,14 +87,21 @@ serve(async (req) => {
     });
 
     const groqResponse = await response.json();
-    const insights = groqResponse.choices[0].message.content;
+    const content = groqResponse.choices[0].message.content;
 
-    // Store the insights in the database
+    if (type === 'chat') {
+      return new Response(
+        JSON.stringify({ message: content }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Store insights in the database for non-chat responses
     const { data: storedInsight, error: insertError } = await supabase
       .from('ai_insights')
       .insert({
         user_id,
-        content: insights,
+        content,
         insight_type: 'financial',
         is_read: false,
       })

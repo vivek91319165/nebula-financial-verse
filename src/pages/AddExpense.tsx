@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Camera, Wallet, Upload, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,6 +13,9 @@ import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
+
+const expenseCategories = ['food', 'transport', 'entertainment', 'utilities', 'housing', 'shopping', 'health', 'education', 'other'] as const;
+type ExpenseCategory = typeof expenseCategories[number];
 
 const AddExpense = () => {
   const navigate = useNavigate();
@@ -42,7 +44,6 @@ const AddExpense = () => {
 
     setIsSubmitting(true);
     try {
-      // Use explicit typing for the insert operation
       const expenseData: Database['public']['Tables']['expenses']['Insert'] = {
         amount: parseFloat(amount),
         merchant: merchant || null,
@@ -68,7 +69,6 @@ const AddExpense = () => {
 
   const handleScanReceipt = () => {
     setIsScanning(true);
-    // Simulate scanning
     setTimeout(() => {
       setIsScanning(false);
     }, 2000);
@@ -76,7 +76,6 @@ const AddExpense = () => {
 
   const handleConnectWallet = () => {
     setIsConnecting(true);
-    // Simulate wallet connection
     setTimeout(() => {
       setIsConnecting(false);
     }, 2000);

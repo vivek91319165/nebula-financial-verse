@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Brain, MessageSquare, ArrowRight, ArrowLeft, ChevronRight, ChevronLeft, ArrowUpRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { useAiInsights } from "@/hooks/useAiInsights";
+import { toast } from "sonner";
 
 const AiInsights = () => {
-  const { insights, isLoading, generateInsights, markAsRead } = useAiInsights();
+  const { insights, isLoading, generateInsights, getChatResponse, markAsRead } = useAiInsights();
   const [messages, setMessages] = useState([
     { id: 1, text: "Hi there! I'm your Nebula Budget AI assistant. How can I help with your financial planning today?", sender: "ai" }
   ]);
@@ -19,23 +19,28 @@ const AiInsights = () => {
   const [currentInsightIndex, setCurrentInsightIndex] = useState(0);
 
   // Handle sending a new message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
     
     const userMessage = { id: messages.length + 1, text: inputMessage, sender: "user" };
-    setMessages([...messages, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage("");
     setIsTyping(true);
     
-    setTimeout(() => {
+    try {
+      const response = await getChatResponse.mutateAsync(inputMessage);
       const aiMessage = { 
         id: messages.length + 2, 
-        text: "I'm analyzing your financial data to provide personalized advice. Would you like me to generate new insights for you?", 
+        text: response.message, 
         sender: "ai" 
       };
-      setMessages([...messages, userMessage, aiMessage]);
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      toast.error('Failed to get AI response');
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleGenerateInsights = () => {
