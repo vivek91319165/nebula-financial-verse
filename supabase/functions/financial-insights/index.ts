@@ -86,7 +86,20 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Groq API error:', errorData);
+      throw new Error(`Groq API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
     const groqResponse = await response.json();
+    
+    // Check if the expected properties exist
+    if (!groqResponse || !groqResponse.choices || !groqResponse.choices[0] || !groqResponse.choices[0].message) {
+      console.error('Unexpected Groq API response format:', groqResponse);
+      throw new Error('Unexpected response format from Groq API');
+    }
+    
     const content = groqResponse.choices[0].message.content;
 
     if (type === 'chat') {
@@ -118,7 +131,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error generating insights:', error);
     return new Response(
-      JSON.stringify({ error: 'Failed to generate insights' }),
+      JSON.stringify({ error: 'Failed to generate insights', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

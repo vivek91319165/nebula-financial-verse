@@ -54,16 +54,28 @@ export const useAiInsights = () => {
     mutationFn: async (message: string) => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.functions.invoke('financial-insights', {
-        body: { 
-          user_id: user.id,
-          message,
-          type: 'chat'
-        },
-      });
+      try {
+        const { data, error } = await supabase.functions.invoke('financial-insights', {
+          body: { 
+            user_id: user.id,
+            message,
+            type: 'chat'
+          },
+        });
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        if (!data || !data.message) {
+          throw new Error('Invalid response from AI assistant');
+        }
+        return data;
+      } catch (error: any) {
+        console.error('Error getting chat response:', error);
+        throw new Error(error.message || 'Failed to get chat response');
+      }
+    },
+    onError: (error) => {
+      console.error('Error in getChatResponse:', error);
+      toast.error('Failed to get AI response');
     },
   });
 
