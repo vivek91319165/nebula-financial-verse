@@ -5,36 +5,105 @@ import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from "recharts";
-
-// Sample data for charts
-const monthlyData = [
-  { name: "Jan", expense: 1200, income: 2400 },
-  { name: "Feb", expense: 1800, income: 2100 },
-  { name: "Mar", expense: 1400, income: 2400 },
-  { name: "Apr", expense: 1900, income: 2600 },
-  { name: "May", expense: 1300, income: 2000 },
-  { name: "Jun", expense: 1500, income: 2400 },
-];
-
-const categoryData = [
-  { name: "Housing", value: 1200 },
-  { name: "Food", value: 800 },
-  { name: "Transport", value: 600 },
-  { name: "Entertainment", value: 400 },
-  { name: "Utilities", value: 300 },
-  { name: "Other", value: 200 },
-];
-
-const cryptoData = [
-  { name: "Jan", btc: 5.2, eth: 3.8, xlm: 2.1 },
-  { name: "Feb", btc: 4.8, eth: 4.1, xlm: 2.5 },
-  { name: "Mar", btc: 5.5, eth: 4.5, xlm: 2.2 },
-  { name: "Apr", btc: 6.2, eth: 5.0, xlm: 2.8 },
-  { name: "May", btc: 5.8, eth: 4.7, xlm: 2.4 },
-  { name: "Jun", btc: 6.5, eth: 5.2, xlm: 3.0 },
-];
+import { useMonthlyExpenses } from "@/hooks/useMonthlyExpenses";
+import { useWallet } from "@/hooks/useWallet";
+import { useBalance } from "@/hooks/useBalance";
+import { useState, useEffect } from "react";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/providers/AuthProvider';
 
 const Analytics = () => {
+  const { balance } = useBalance();
+  const { data: monthlyExpenses } = useMonthlyExpenses();
+  const { assets } = useWallet();
+  const { user } = useAuth();
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+
+  // Fetch monthly income/expense data
+  useEffect(() => {
+    const fetchMonthlyData = async () => {
+      if (!user) return;
+
+      // Get the last 6 months
+      const months = Array.from({length: 6}, (_, i) => {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        return date;
+      }).reverse();
+
+      const data = await Promise.all(months.map(async (date) => {
+        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+        const { data: expenses } = await supabase
+          .from('expenses')
+          .select('amount')
+          .gte('created_at', startOfMonth.toISOString())
+          .lte('created_at', endOfMonth.toISOString())
+          .eq('user_id', user.id);
+
+        // Sum up expenses for the month
+        const expense = expenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
+
+        return {
+          name: date.toLocaleString('default', { month: 'short' }),
+          expense: expense,
+          income: balance ? balance / 6 : 0, // Simulated monthly income based on total balance
+        };
+      }));
+
+      setMonthlyData(data);
+    };
+
+    fetchMonthlyData();
+  }, [user, balance]);
+
+  // Fetch category data
+  useEffect(() => {
+    const fetchCategoryData = async () => {
+      if (!user) return;
+
+      const { data: expenses } = await supabase
+        .from('expenses')
+        .select('amount, category');
+
+      if (expenses) {
+        const categoryTotals = expenses.reduce((acc: any, expense) => {
+          const category = expense.category;
+          acc[category] = (acc[category] || 0) + Number(expense.amount);
+          return acc;
+        }, {});
+
+        const formattedData = Object.entries(categoryTotals).map(([name, value]) => ({
+          name,
+          value: Number(value)
+        }));
+
+        setCategoryData(formattedData);
+      }
+    };
+
+    fetchCategoryData();
+  }, [user]);
+
+  // Calculate crypto performance data
+  const cryptoData = assets.map((asset, index) => {
+    const baseValue = asset.value;
+    return {
+      name: asset.name,
+      value: baseValue,
+      change: asset.change
+    };
+  });
+
+  // Calculate totals for summary cards
+  const totalIncome = balance || 0;
+  const totalExpenses = monthlyExpenses || 0;
+  const netSavings = totalIncome - totalExpenses;
+  const expensePercentage = totalIncome ? (totalExpenses / totalIncome) * 100 : 0;
+  const savingsPercentage = totalIncome ? (netSavings / totalIncome) * 100 : 0;
+
   return (
     <MainLayout>
       <div className="container px-4 py-8">
@@ -111,63 +180,31 @@ const Analytics = () => {
           </Card>
         </div>
 
-        <Card className="p-4 bg-nebula-space-light border-nebula-purple/20 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white flex items-center">
-              <TrendingDown className="h-5 w-5 mr-2 text-nebula-purple" />
-              Crypto Performance
-            </h2>
-            <div className="text-xs font-medium text-gray-400">Last 6 Months</div>
-          </div>
-          
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={cryptoData}
-              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="name" stroke="#9CA3AF" />
-              <YAxis stroke="#9CA3AF" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "#1E293B", 
-                  borderColor: "#6B7280",
-                  color: "#F9FAFB" 
-                }} 
-              />
-              <Legend />
-              <Line type="monotone" dataKey="btc" name="Bitcoin" stroke="#F7931A" strokeWidth={2} />
-              <Line type="monotone" dataKey="eth" name="Ethereum" stroke="#627EEA" strokeWidth={2} />
-              <Line type="monotone" dataKey="xlm" name="Stellar" stroke="#9b87f5" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4 bg-nebula-space-light border-nebula-blue/20">
             <h3 className="text-sm font-medium text-gray-400 mb-2">Total Income</h3>
-            <div className="text-2xl font-bold text-white">$13,900</div>
+            <div className="text-2xl font-bold text-white">${totalIncome.toFixed(2)}</div>
             <div className="text-xs text-green-400 flex items-center mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +8.2% from last month
+              Monthly average: ${(totalIncome / 6).toFixed(2)}
             </div>
           </Card>
           
           <Card className="p-4 bg-nebula-space-light border-nebula-orange/20">
             <h3 className="text-sm font-medium text-gray-400 mb-2">Total Expenses</h3>
-            <div className="text-2xl font-bold text-white">$8,100</div>
+            <div className="text-2xl font-bold text-white">${totalExpenses.toFixed(2)}</div>
             <div className="text-xs text-red-400 flex items-center mt-1">
               <TrendingDown className="h-3 w-3 mr-1" />
-              +12.5% from last month
+              {expensePercentage.toFixed(1)}% of income
             </div>
           </Card>
           
           <Card className="p-4 bg-nebula-space-light border-nebula-purple/20">
             <h3 className="text-sm font-medium text-gray-400 mb-2">Net Savings</h3>
-            <div className="text-2xl font-bold text-white">$5,800</div>
+            <div className="text-2xl font-bold text-white">${netSavings.toFixed(2)}</div>
             <div className="text-xs text-green-400 flex items-center mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +2.7% from last month
+              {savingsPercentage.toFixed(1)}% of income
             </div>
           </Card>
         </div>
