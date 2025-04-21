@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,6 +19,7 @@ serve(async (req) => {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!groqApiKey) {
+    console.error('GROQ_API_KEY not configured');
     return new Response(
       JSON.stringify({ error: 'GROQ_API_KEY not configured' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -25,7 +27,16 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, message, type } = await req.json();
+    // Parse the request body
+    const requestData = await req.json();
+    const { user_id, message, type } = requestData;
+
+    if (!user_id) {
+      return new Response(
+        JSON.stringify({ error: 'User ID is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
@@ -40,7 +51,7 @@ serve(async (req) => {
       .from('balances')
       .select('*')
       .eq('user_id', user_id)
-      .single();
+      .maybeSingle();
 
     const { data: wallets } = await supabase
       .from('wallets')
@@ -55,6 +66,7 @@ serve(async (req) => {
       wallets: wallets || [],
     };
 
+    // Set the system prompt based on the request type
     let systemPrompt = '';
     if (type === 'chat') {
       systemPrompt = `You are a helpful financial assistant. Use this financial data to provide specific, personalized advice: ${JSON.stringify(financialData)}. Be concise and practical in your responses.`;
@@ -63,6 +75,8 @@ serve(async (req) => {
     }
 
     // Call Groq API
+    console.log(`Calling Groq API with system prompt: ${systemPrompt.substring(0, 100)}...`);
+    
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -87,16 +101,22 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Groq API error:', errorData);
-      throw new Error(`Groq API error: ${errorData.error?.message || 'Unknown error'}`);
+      const errorText = await response.text();
+      console.error('Groq API error response:', errorText);
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(`Groq API error: ${errorData.error?.message || 'Unknown error'}`);
+      } catch (e) {
+        throw new Error(`Groq API error: ${response.status} - ${errorText.substring(0, 100)}`);
+      }
     }
 
     const groqResponse = await response.json();
     
     // Check if the expected properties exist
     if (!groqResponse || !groqResponse.choices || !groqResponse.choices[0] || !groqResponse.choices[0].message) {
-      console.error('Unexpected Groq API response format:', groqResponse);
+      console.error('Unexpected Groq API response format:', JSON.stringify(groqResponse).substring(0, 200));
       throw new Error('Unexpected response format from Groq API');
     }
     
@@ -121,7 +141,10 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('Error storing insight:', insertError);
+      throw insertError;
+    }
 
     return new Response(
       JSON.stringify({ insights: storedInsight }),

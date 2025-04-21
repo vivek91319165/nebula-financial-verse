@@ -30,23 +30,28 @@ export const useAiInsights = () => {
     mutationFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase.functions.invoke('financial-insights', {
-        body: { 
-          user_id: user.id,
-          type: 'insights'
-        },
-      });
+      try {
+        const { data, error } = await supabase.functions.invoke('financial-insights', {
+          body: { 
+            user_id: user.id,
+            type: 'insights'
+          },
+        });
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } catch (error: any) {
+        console.error('Error generating insights:', error);
+        throw new Error(error.message || 'Failed to generate insights');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ai-insights'] });
       toast.success('New insights generated!');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error generating insights:', error);
-      toast.error('Failed to generate insights');
+      toast.error(`Failed to generate insights: ${error.message || 'Unknown error'}`);
     },
   });
 
@@ -63,19 +68,25 @@ export const useAiInsights = () => {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw new Error(`Supabase function error: ${error.message || 'Unknown error'}`);
+        }
+        
         if (!data || !data.message) {
+          console.error('Invalid AI response data:', data);
           throw new Error('Invalid response from AI assistant');
         }
+        
         return data;
       } catch (error: any) {
         console.error('Error getting chat response:', error);
         throw new Error(error.message || 'Failed to get chat response');
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error in getChatResponse:', error);
-      toast.error('Failed to get AI response');
+      toast.error(`Failed to get AI response: ${error.message || 'Unknown error'}`);
     },
   });
 
@@ -93,6 +104,10 @@ export const useAiInsights = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ai-insights'] });
+    },
+    onError: (error: any) => {
+      console.error('Error marking insight as read:', error);
+      toast.error('Failed to update insight');
     },
   });
 

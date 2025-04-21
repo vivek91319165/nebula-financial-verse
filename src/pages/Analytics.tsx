@@ -1,3 +1,4 @@
+
 import { BarChart3, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -57,44 +58,6 @@ const Analytics = () => {
 
     fetchMonthlyData();
   }, [user, balance]);
-
-  // Fetch category data
-  useEffect(() => {
-    const fetchCategoryData = async () => {
-      if (!user) return;
-
-      const { data: expenses } = await supabase
-        .from('expenses')
-        .select('amount, category');
-
-      if (expenses) {
-        const categoryTotals = expenses.reduce((acc: any, expense) => {
-          const category = expense.category;
-          acc[category] = (acc[category] || 0) + Number(expense.amount);
-          return acc;
-        }, {});
-
-        const formattedData = Object.entries(categoryTotals).map(([name, value]) => ({
-          name,
-          value: Number(value)
-        }));
-
-        setCategoryData(formattedData);
-      }
-    };
-
-    fetchCategoryData();
-  }, [user]);
-
-  // Calculate crypto performance data
-  const cryptoData = assets.map((asset, index) => {
-    const baseValue = asset.value;
-    return {
-      name: asset.name,
-      value: baseValue,
-      change: asset.change
-    };
-  });
 
   // Calculate totals for summary cards
   const totalIncome = balance || 0;
