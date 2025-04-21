@@ -1,10 +1,9 @@
+
 import { useState } from "react";
-import { Brain, MessageSquare, ArrowRight, ArrowLeft, ChevronRight, ChevronLeft, ArrowUpRight, Sparkles } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Brain, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import { useAiInsights } from "@/hooks/useAiInsights";
 import { toast } from "sonner";
@@ -86,7 +85,7 @@ const AiInsights = () => {
                         insight.is_read ? 'border-nebula-orange/10' : 'border-nebula-orange/30'
                       } hover:border-nebula-orange/50 transition-colors`}
                     >
-                      <ul className="mb-2 list-disc list-inside text-white">
+                      <ul className="mb-2 list-disc list-inside text-gray-900 dark:text-gray-100">
                         {(insight.content || "")
                           .split('\n')
                           .filter((line: string) => line.trim() !== '')
@@ -205,3 +204,4 @@ const AiInsights = () => {
 };
 
 export default AiInsights;
+
