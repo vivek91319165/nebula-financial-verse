@@ -18,7 +18,6 @@ const AiInsights = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [currentInsightIndex, setCurrentInsightIndex] = useState(0);
 
-  // Handle sending a new message
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
     
@@ -57,7 +56,6 @@ const AiInsights = () => {
         <h1 className="text-2xl font-bold text-white mb-6">AI Insights</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* AI Insights Panel */}
           <div className="lg:col-span-2">
             <Card className="p-6 bg-nebula-space-light border-nebula-orange/20 h-full">
               <div className="flex items-center justify-between mb-4">
@@ -88,7 +86,14 @@ const AiInsights = () => {
                         insight.is_read ? 'border-nebula-orange/10' : 'border-nebula-orange/30'
                       } hover:border-nebula-orange/50 transition-colors`}
                     >
-                      <p className="text-white mb-2">{insight.content}</p>
+                      <ul className="mb-2 list-disc list-inside text-white">
+                        {(insight.content || "")
+                          .split('\n')
+                          .filter((line: string) => line.trim() !== '')
+                          .map((line: string, idx: number) => (
+                            <li key={idx}>{line}</li>
+                          ))}
+                      </ul>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-xs text-gray-400">
                           {new Date(insight.created_at).toLocaleDateString()}
@@ -126,7 +131,6 @@ const AiInsights = () => {
             </Card>
           </div>
 
-          {/* AI Chat Interface */}
           <div className="lg:col-span-3">
             <Card className="bg-nebula-space-light border-nebula-orange/20 h-full flex flex-col">
               <div className="p-4 border-b border-nebula-orange/20 flex items-center">
