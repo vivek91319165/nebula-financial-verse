@@ -1,6 +1,5 @@
 
-import { BarChart3, ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BarChart3, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Title } from "@/components/ui/typography";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Cell } from "recharts";
@@ -82,7 +81,6 @@ const Analytics = () => {
           </ResponsiveContainer>
         </Card>
 
-
         {/* Expenses by Category Chart */}
         <Card className="p-6 bg-nebula-space-light border-nebula-orange/20 h-[400px]">
           <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
@@ -100,7 +98,7 @@ const Analytics = () => {
               <Legend />
               <Bar dataKey="value" name="Amount ($)">
                 {categoryData.map((entry, index) => {
-                  const categoryKey = entry.name as ExpenseCategory;
+                  const categoryKey = entry.name as keyof typeof categoryColors;
                   const color = categoryColors[categoryKey] || '#F97316';
                   return <Cell key={`cell-${index}`} fill={color} />;
                 })}
