@@ -98,7 +98,7 @@ const Analytics = () => {
               <Legend />
               <Bar dataKey="value" name="Amount ($)">
                 {categoryData.map((entry, index) => {
-                  const categoryKey = entry.name as keyof typeof categoryColors;
+                  const categoryKey = entry.name as ExpenseCategory;
                   const color = categoryColors[categoryKey] || '#F97316';
                   return <Cell key={`cell-${index}`} fill={color} />;
                 })}
