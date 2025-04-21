@@ -38,7 +38,15 @@ export const useAiInsights = () => {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase function error:', error);
+          throw new Error(`Supabase function error: ${error.message || 'Unknown error'}`);
+        }
+        
+        if (!data) {
+          throw new Error('Invalid response from AI service');
+        }
+        
         return data;
       } catch (error: any) {
         console.error('Error generating insights:', error);

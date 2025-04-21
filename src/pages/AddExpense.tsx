@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Camera, Wallet, Upload, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -27,7 +28,7 @@ const AddExpense = () => {
 
   const [amount, setAmount] = useState("");
   const [merchant, setMerchant] = useState("");
-  const [category, setCategory] = useState<string>("");
+  const [category, setCategory] = useState<ExpenseCategory>("food");
   const [description, setDescription] = useState("");
   const [currency, setCurrency] = useState("USD");
 
@@ -118,7 +119,12 @@ const AddExpense = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="bg-nebula-blue/10 border border-nebula-blue/20 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer nebula-glow"
-                    onClick={handleScanReceipt}
+                    onClick={() => {
+                      setIsScanning(true);
+                      setTimeout(() => {
+                        setIsScanning(false);
+                      }, 2000);
+                    }}
                   >
                     <div className="bg-nebula-blue/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
                       {isScanning ? (
@@ -179,20 +185,16 @@ const AddExpense = () => {
                     
                     <div>
                       <Label htmlFor="category" className="text-gray-300">Category</Label>
-                      <Select value={category} onValueChange={setCategory}>
+                      <Select value={category} onValueChange={(value: ExpenseCategory) => setCategory(value)}>
                         <SelectTrigger className="bg-nebula-space border-nebula-blue/20">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent className="bg-nebula-space-light border-nebula-blue/20">
-                          <SelectItem value="food">Food & Dining</SelectItem>
-                          <SelectItem value="transport">Transportation</SelectItem>
-                          <SelectItem value="entertainment">Entertainment</SelectItem>
-                          <SelectItem value="utilities">Utilities</SelectItem>
-                          <SelectItem value="housing">Housing</SelectItem>
-                          <SelectItem value="shopping">Shopping</SelectItem>
-                          <SelectItem value="health">Health</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          {expenseCategories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -226,7 +228,12 @@ const AddExpense = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="bg-nebula-purple/10 border border-nebula-purple/20 rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer mb-6 nebula-glow"
-                  onClick={handleConnectWallet}
+                  onClick={() => {
+                    setIsConnecting(true);
+                    setTimeout(() => {
+                      setIsConnecting(false);
+                    }, 2000);
+                  }}
                 >
                   <div className="bg-nebula-purple/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
                     {isConnecting ? (

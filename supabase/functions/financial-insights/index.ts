@@ -74,7 +74,7 @@ serve(async (req) => {
       systemPrompt = `You are a financial advisor analyzing user data. Provide 3 specific, actionable insights based on their financial data. Focus on spending patterns, savings opportunities, and investment suggestions. Be concise and specific.`;
     }
 
-    // Call Groq API
+    // Call Groq API with updated model
     console.log(`Calling Groq API with system prompt: ${systemPrompt.substring(0, 100)}...`);
     
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -84,7 +84,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'mixtral-8x7b-32768',
+        model: 'llama-3.1-8b-instant', // Updated model that is currently available
         messages: [
           {
             role: 'system',
@@ -106,7 +106,7 @@ serve(async (req) => {
       
       try {
         const errorData = JSON.parse(errorText);
-        throw new Error(`Groq API error: ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(`Groq API error: ${errorData.error?.message || errorData.message || 'Unknown error'}`);
       } catch (e) {
         throw new Error(`Groq API error: ${response.status} - ${errorText.substring(0, 100)}`);
       }

@@ -24,9 +24,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const { data } = await supabase.auth.getSession();
         setSession(data.session);
         setUser(data.session?.user ?? null);
-        setLoading(false);
       } catch (error) {
         console.error("Error getting session:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -35,9 +35,9 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
     // Then, set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (_event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         setLoading(false);
       }
     );
@@ -47,8 +47,13 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     };
   }, []);
 
+  const value = {
+    user,
+    session
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

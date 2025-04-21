@@ -66,6 +66,11 @@ const Analytics = () => {
   const expensePercentage = totalIncome ? (totalExpenses / totalIncome) * 100 : 0;
   const savingsPercentage = totalIncome ? (netSavings / totalIncome) * 100 : 0;
 
+  // Function to get category colors for the bar chart
+  const getCategoryColor = (entry: any) => {
+    return categoryColors[entry.name] || '#F97316';
+  };
+
   return (
     <MainLayout>
       <div className="container px-4 py-8">
@@ -139,7 +144,7 @@ const Analytics = () => {
                 <Bar 
                   dataKey="value" 
                   name="Amount ($)"
-                  fill={(entry) => categoryColors[entry.name] || '#F97316'}
+                  fill={getCategoryColor}
                 />
               </BarChart>
             </ResponsiveContainer>
