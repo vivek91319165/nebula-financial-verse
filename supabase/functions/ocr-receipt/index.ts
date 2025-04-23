@@ -3,7 +3,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get("OPENAI_API_KEY");
+const groqApiKey = Deno.env.get("GROQ_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,30 +38,33 @@ serve(async (req) => {
       Return only the JSON object, nothing else.
     `;
 
-    const openaiResp = await fetch("https://api.openai.com/v1/chat/completions", {
+    const groqResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${openAIApiKey}`,
+        "Authorization": `Bearer ${groqApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [{
-          role: "system",
-          content: "You are a helpful assistant that extracts structured data from receipts."
-        }, {
-          role: "user",
-          content: prompt
-        }],
+        model: "llama-3-70b-8192",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant that extracts structured data from receipts."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
         max_tokens: 512,
         temperature: 0.1
       }),
     });
 
-    const oaiData = await openaiResp.json();
+    const groqData = await groqResp.json();
 
     // Try to find and return JSON object from response
-    const content = oaiData.choices?.[0]?.message?.content;
+    const content = groqData.choices?.[0]?.message?.content;
     let info = {};
     try {
       info = JSON.parse(content);
