@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Camera, Wallet, Upload, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import MainLayout from "@/components/layout/MainLayout";
 import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
+import { useReceiptUpload } from "@/hooks/useReceiptUpload";
+import { useReceiptOcr } from "@/hooks/useReceiptOcr";
 
 const expenseCategories = ['food', 'transport', 'entertainment', 'utilities', 'housing', 'shopping', 'health', 'education', 'other'] as const;
 type ExpenseCategory = typeof expenseCategories[number];
@@ -31,6 +32,12 @@ const AddExpense = () => {
   const [category, setCategory] = useState<ExpenseCategory>("food");
   const [description, setDescription] = useState("");
   const [currency, setCurrency] = useState("USD");
+
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+
+  const { uploadReceipt, uploading, error: uploadError } = useReceiptUpload();
+  const { scanReceipt, scanning: ocrScanning, error: ocrError } = useReceiptOcr();
 
   const handleSubmitExpense = async () => {
     if (!user) {
@@ -68,18 +75,36 @@ const AddExpense = () => {
     }
   };
 
-  const handleScanReceipt = () => {
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-    }, 2000);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setReceiptFile(file);
+    const url = await uploadReceipt(file);
+    if (url) {
+      setReceiptUrl(url);
+      toast.success("Receipt uploaded!");
+    } else {
+      toast.error("Failed to upload receipt");
+    }
   };
 
-  const handleConnectWallet = () => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      setIsConnecting(false);
-    }, 2000);
+  const handleOcrAndFill = async () => {
+    if (!receiptUrl) {
+      toast.error("Upload a receipt image first.");
+      return;
+    }
+    toast.info("Scanning receipt with AI...");
+    const ocrData = await scanReceipt(receiptUrl);
+    if (ocrData) {
+      if (ocrData.merchant) setMerchant(ocrData.merchant);
+      if (ocrData.amount) setAmount(ocrData.amount);
+      if (ocrData.category) setCategory(ocrData.category as ExpenseCategory);
+      if (ocrData.description) setDescription(ocrData.description);
+      if (ocrData.currency) setCurrency(ocrData.currency);
+      toast.success("Receipt details extracted!");
+    } else {
+      toast.error("Could not extract details from receipt.");
+    }
   };
 
   return (
@@ -118,39 +143,54 @@ const AddExpense = () => {
                   <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="bg-nebula-blue/10 border border-nebula-blue/20 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer nebula-glow"
-                    onClick={() => {
-                      setIsScanning(true);
-                      setTimeout(() => {
-                        setIsScanning(false);
-                      }, 2000);
-                    }}
+                    className={`bg-nebula-blue/10 border border-nebula-blue/20 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer nebula-glow ${ocrScanning ? "opacity-60 pointer-events-none" : ""}`}
+                    onClick={handleOcrAndFill}
                   >
                     <div className="bg-nebula-blue/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                      {isScanning ? (
+                      {(ocrScanning || isScanning) ? (
                         <div className="w-6 h-6 border-2 border-nebula-blue border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <Camera className="text-nebula-blue h-6 w-6" />
                       )}
                     </div>
                     <h3 className="text-lg font-semibold text-nebula-blue mb-1">
-                      {isScanning ? "Processing..." : "Scan Receipt"}
+                      {(ocrScanning || isScanning) ? "Processing..." : "Scan Receipt"}
                     </h3>
                     <p className="text-sm text-center text-gray-400">
-                      {isScanning ? "Analyzing image..." : "Use OCR to automatically detect expense details"}
+                      {(ocrScanning || isScanning) ? "Analyzing image and extracting details with AI..." : "Use AI to read your receipt and auto-fill details"}
                     </p>
                   </motion.div>
 
                   <motion.div
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="bg-nebula-blue/10 border border-nebula-blue/20 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer nebula-glow"
+                    className={`bg-nebula-blue/10 border border-nebula-blue/20 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer nebula-glow ${uploading ? "opacity-60 pointer-events-none" : ""}`}
                   >
-                    <div className="bg-nebula-blue/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                      <Upload className="text-nebula-blue h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-nebula-blue mb-1">Upload Receipt</h3>
-                    <p className="text-sm text-center text-gray-400">Upload an image of your receipt</p>
+                    <label
+                      htmlFor="receipt-upload"
+                      className="w-full flex flex-col items-center cursor-pointer"
+                    >
+                      <div className="bg-nebula-blue/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                        <Upload className="text-nebula-blue h-6 w-6" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-nebula-blue mb-1">Upload Receipt</h3>
+                      <p className="text-sm text-center text-gray-400">
+                        {receiptFile
+                          ? `Uploaded: ${receiptFile.name}`
+                          : uploading
+                          ? "Uploading..."
+                          : "Upload an image of your receipt (.jpg, .png)"
+                        }
+                      </p>
+                      <input
+                        id="receipt-upload"
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        disabled={uploading}
+                        onChange={handleFileChange}
+                      />
+                    </label>
                   </motion.div>
                 </div>
 
@@ -334,4 +374,3 @@ const AddExpense = () => {
 };
 
 export default AddExpense;
-
