@@ -163,7 +163,7 @@ const AddExpense = () => {
                       <Input 
                         id="merchant" 
                         placeholder="Enter merchant name" 
-                        className="bg-nebula-space border-nebula-blue/20"
+                        className="bg-nebula-space border-nebula-blue/20 text-white placeholder:text-gray-500"
                         value={merchant}
                         onChange={(e) => setMerchant(e.target.value)}
                       />
@@ -176,7 +176,7 @@ const AddExpense = () => {
                         placeholder="0.00" 
                         type="number" 
                         step="0.01" 
-                        className="bg-nebula-space border-nebula-blue/20"
+                        className="bg-nebula-space border-nebula-blue/20 text-white placeholder:text-gray-500"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required
@@ -186,12 +186,12 @@ const AddExpense = () => {
                     <div>
                       <Label htmlFor="category" className="text-gray-300">Category</Label>
                       <Select value={category} onValueChange={(value: ExpenseCategory) => setCategory(value)}>
-                        <SelectTrigger className="bg-nebula-space border-nebula-blue/20">
+                        <SelectTrigger className="bg-nebula-space border-nebula-blue/20 text-white">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent className="bg-nebula-space-light border-nebula-blue/20">
                           {expenseCategories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
+                            <SelectItem key={cat} value={cat} className="text-white hover:bg-nebula-blue/20">
                               {cat.charAt(0).toUpperCase() + cat.slice(1)}
                             </SelectItem>
                           ))}
@@ -204,7 +204,7 @@ const AddExpense = () => {
                       <Input 
                         id="description" 
                         placeholder="Add description (optional)" 
-                        className="bg-nebula-space border-nebula-blue/20"
+                        className="bg-nebula-space border-nebula-blue/20 text-white placeholder:text-gray-500"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                       />
@@ -334,3 +334,4 @@ const AddExpense = () => {
 };
 
 export default AddExpense;
+
